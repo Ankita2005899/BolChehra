@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+backend/uploads/
+backend/results/
+backend/SadTalker/
+.DS_Store
+.env
