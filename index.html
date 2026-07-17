@@ -45,6 +45,24 @@
   button:disabled { background: #ccc; cursor: not-allowed; }
   #status { margin-top: 16px; font-size: 14px; color: #555; }
   video { margin-top: 20px; width: 100%; border-radius: 8px; }
+  .limit-notice {
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: #fff4e5;
+    border: 1px solid #f0b955;
+    border-left: 4px solid #d97757;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #7a4a1a;
+    line-height: 1.5;
+  }
+  .char-counter {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #888;
+    text-align: right;
+  }
+  .char-counter.over { color: #c0392b; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -70,6 +88,10 @@
 
     <label for="script">Script</label>
     <textarea id="script" placeholder="Apna script yahan likho..." required></textarea>
+    <div class="char-counter" id="charCounter">0 / 5000 characters</div>
+    <div class="limit-notice">
+      ⚠️ <strong>Script 5000 characters se zyada na ho.</strong> Isse zyada lamba text (jaise 2000-3000 words wala poora script) ek saath process nahi ho payega — audio/video generation fail ho sakta hai. Lambe script ko chhote hisso mein todke alag-alag videos banao.
+    </div>
 
     <button type="submit" id="submitBtn">Generate Video</button>
   </form>
@@ -79,12 +101,21 @@
 
 <script>
   // Change this to your deployed backend URL (e.g. https://your-app.onrender.com)
-  const API_URL = "https://bolchehra.onrender.com";
+  const API_URL = "https://panhandle-overlap-jawline.ngrok-free.dev";
 
   const form = document.getElementById("genForm");
   const statusEl = document.getElementById("status");
   const btn = document.getElementById("submitBtn");
   const videoEl = document.getElementById("resultVideo");
+  const scriptEl = document.getElementById("script");
+  const charCounterEl = document.getElementById("charCounter");
+  const MAX_CHARS = 5000;
+
+  scriptEl.addEventListener("input", () => {
+    const len = scriptEl.value.length;
+    charCounterEl.textContent = `${len} / ${MAX_CHARS} characters`;
+    charCounterEl.classList.toggle("over", len > MAX_CHARS);
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -93,6 +124,11 @@
     const script = document.getElementById("script").value;
 
     if (!imageFile || !script) return;
+
+    if (script.length > MAX_CHARS) {
+      statusEl.textContent = `Script bahut lamba hai (${script.length} characters). Kripya ${MAX_CHARS} characters se kam karo.`;
+      return;
+    }
 
     const formData = new FormData();
     formData.append("image", imageFile);
