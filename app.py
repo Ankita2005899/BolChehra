@@ -27,6 +27,8 @@ RESULT_DIR = BASE_DIR / "results"
 UPLOAD_DIR.mkdir(exist_ok=True)
 RESULT_DIR.mkdir(exist_ok=True)
 
+MAX_SCRIPT_CHARS = 5000
+
 
 @app.get("/health")
 def health():
@@ -35,6 +37,12 @@ def health():
 
 @app.post("/generate")
 async def generate(image: UploadFile = File(...), script: str = Form(...)):
+    if len(script) > MAX_SCRIPT_CHARS:
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"Script too long ({len(script)} chars). Max allowed is {MAX_SCRIPT_CHARS} characters."},
+        )
+
     job_id = str(uuid.uuid4())[:8]
 
     # 1. Save uploaded image
@@ -56,10 +64,10 @@ async def generate(image: UploadFile = File(...), script: str = Form(...)):
         "--driven_audio", str(audio_path.resolve()),
         "--source_image", str(image_path.resolve()),
         "--result_dir", str(job_result_dir.resolve()),
-        "--preprocess", "crop",
-        "--still",
-        "--batch_size", "10",
-        "--size", "256",
+        "--preprocess", "full",
+        "--enhancer", "gfpgan",
+        "--size", "512",
+        "--batch_size", "32",
     ]
 
     try:

@@ -1,7 +1,10 @@
 __pycache__/
 *.pyc
-backend/uploads/
-backend/results/
-backend/SadTalker/
+uploads/
+results/
+SadTalker/
 .DS_Store
 .env
+api_key.txt
+*.mp3
+*.mp4
