@@ -212,6 +212,7 @@ FRONTEND_HTML = """
     <label for="script">Script</label>
     <textarea id="script" placeholder="Apna script yahan likho..." required></textarea>
     <div class="char-counter" id="charCounter">0 / 5000 characters</div>
+    <div id="estimateNote" style="margin-top:4px;font-size:12px;color:#888;text-align:right;"></div>
     <div class="limit-notice">
       ⚠️ <strong>Script 5000 characters se zyada na ho.</strong> Isse zyada lamba text ek saath process nahi ho payega — audio/video generation fail ho sakta hai.
     </div>
@@ -243,10 +244,25 @@ FRONTEND_HTML = """
     const charCounterEl = document.getElementById("charCounter");
     const MAX_CHARS = 5000;
 
+    function estimateMinutes(charCount) {
+      // Rough heuristic based on observed processing times (CPU server):
+      // ~3 min base overhead (image processing + model load) + ~5 min per 500 characters
+      const est = 3 + (charCount / 500) * 5;
+      return Math.max(2, Math.round(est));
+    }
+
     scriptEl.addEventListener("input", () => {
       const len = scriptEl.value.length;
       charCounterEl.textContent = `${len} / ${MAX_CHARS} characters`;
       charCounterEl.classList.toggle("over", len > MAX_CHARS);
+
+      const estimateEl = document.getElementById("estimateNote");
+      if (len > 0 && len <= MAX_CHARS) {
+        const est = estimateMinutes(len);
+        estimateEl.textContent = `Estimated wait: ~${est} min`;
+      } else {
+        estimateEl.textContent = "";
+      }
     });
 
     document.getElementById("enableLight").addEventListener("change", (e) => {
@@ -289,14 +305,15 @@ FRONTEND_HTML = """
       statusEl.textContent = "Processing your video, please wait...";
       videoEl.style.display = "none";
       document.getElementById("progressBarWrap").style.display = "block";
+      const estimatedMin = estimateMinutes(script.length);
       let elapsedSec = 0;
       const timerEl = document.getElementById("timer");
-      timerEl.textContent = "Time elapsed: 0:00 (typically 5-15 min, depends on script length aur server load)";
+      timerEl.textContent = `Time elapsed: 0:00 (estimated ~${estimatedMin} min for this script)`;
       const timerInterval = setInterval(() => {
         elapsedSec++;
         const m = Math.floor(elapsedSec / 60);
         const s = (elapsedSec % 60).toString().padStart(2, "0");
-        timerEl.textContent = `Time elapsed: ${m}:${s} (typically 5-15 min, depends on script length aur server load)`;
+        timerEl.textContent = `Time elapsed: ${m}:${s} (estimated ~${estimatedMin} min for this script)`;
       }, 1000);
 
       try {
